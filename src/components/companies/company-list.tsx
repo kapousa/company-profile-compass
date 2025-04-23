@@ -96,7 +96,7 @@ export function CompanyList() {
             <CompanyCard 
               key={company.id} 
               company={company} 
-              onDelete={() => handleDelete(company.id as string)} 
+              onDelete={() => company.id && handleDelete(company.id)} 
             />
           ))}
         </div>

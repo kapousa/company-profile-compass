@@ -1,17 +1,17 @@
 
-import { createContext, ReactNode, useContext, useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { CompanyProfile } from '@/types';
 import { MOCK_COMPANIES } from '@/data/mockData';
-import { generateId } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface CompanyContextType {
   companies: CompanyProfile[];
   loading: boolean;
-  addCompany: (company: CompanyProfile) => Promise<string>;
-  updateCompany: (id: string, company: CompanyProfile) => Promise<void>;
-  deleteCompany: (id: string) => Promise<void>;
-  getCompany: (id: string) => CompanyProfile | undefined;
+  error: string | null;
+  getCompanyById: (id: string) => CompanyProfile | undefined;
+  addCompany: (company: CompanyProfile) => void;
+  updateCompany: (id: string, updatedCompany: CompanyProfile) => void;
+  deleteCompany: (id: string) => void;
 }
 
 const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
@@ -19,23 +19,25 @@ const CompanyContext = createContext<CompanyContextType | undefined>(undefined);
 export const CompanyProvider = ({ children }: { children: ReactNode }) => {
   const [companies, setCompanies] = useState<CompanyProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Load companies from localStorage or use mock data
-    const loadCompanies = async () => {
+    const loadCompanies = () => {
       try {
         const storedCompanies = localStorage.getItem('cpms_companies');
         if (storedCompanies) {
           setCompanies(JSON.parse(storedCompanies));
         } else {
-          // Use mock data for initial setup
-          setCompanies(MOCK_COMPANIES);
+          // Use mock data for initial load
+          setCompanies(MOCK_COMPANIES as CompanyProfile[]);
+          // Store mock data in localStorage for future use
           localStorage.setItem('cpms_companies', JSON.stringify(MOCK_COMPANIES));
         }
+        setLoading(false);
       } catch (error) {
         console.error('Error loading companies:', error);
-        toast.error('Failed to load company data');
-      } finally {
+        setError('Failed to load companies data');
         setLoading(false);
       }
     };
@@ -43,91 +45,64 @@ export const CompanyProvider = ({ children }: { children: ReactNode }) => {
     loadCompanies();
   }, []);
 
-  const updateLocalStorage = (updatedCompanies: CompanyProfile[]) => {
-    localStorage.setItem('cpms_companies', JSON.stringify(updatedCompanies));
-  };
-
-  const addCompany = async (company: CompanyProfile): Promise<string> => {
-    try {
-      // In a real app, this would be an API call
-      const newCompany = {
-        ...company,
-        id: generateId(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      const updatedCompanies = [...companies, newCompany];
-      setCompanies(updatedCompanies);
-      updateLocalStorage(updatedCompanies);
-      
-      toast.success('Company added successfully');
-      return newCompany.id as string;
-    } catch (error) {
-      console.error('Error adding company:', error);
-      toast.error('Failed to add company');
-      throw error;
-    }
-  };
-
-  const updateCompany = async (id: string, company: CompanyProfile): Promise<void> => {
-    try {
-      // In a real app, this would be an API call
-      const updatedCompany = {
-        ...company,
-        id,
-        updatedAt: new Date().toISOString()
-      };
-      
-      const updatedCompanies = companies.map(c => 
-        c.id === id ? updatedCompany : c
-      );
-      
-      setCompanies(updatedCompanies);
-      updateLocalStorage(updatedCompanies);
-      
-      toast.success('Company updated successfully');
-    } catch (error) {
-      console.error('Error updating company:', error);
-      toast.error('Failed to update company');
-      throw error;
-    }
-  };
-
-  const deleteCompany = async (id: string): Promise<void> => {
-    try {
-      // In a real app, this would be an API call
-      const updatedCompanies = companies.filter(c => c.id !== id);
-      
-      setCompanies(updatedCompanies);
-      updateLocalStorage(updatedCompanies);
-      
-      toast.success('Company deleted successfully');
-    } catch (error) {
-      console.error('Error deleting company:', error);
-      toast.error('Failed to delete company');
-      throw error;
-    }
-  };
-
-  const getCompany = (id: string): CompanyProfile | undefined => {
+  const getCompanyById = (id: string): CompanyProfile | undefined => {
     return companies.find(company => company.id === id);
   };
 
-  const value: CompanyContextType = {
+  const addCompany = (company: CompanyProfile) => {
+    // Generate an ID if not provided
+    const newCompany = {
+      ...company,
+      id: company.id || `${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updatedCompanies = [...companies, newCompany];
+    setCompanies(updatedCompanies);
+    localStorage.setItem('cpms_companies', JSON.stringify(updatedCompanies));
+    toast.success('Company added successfully!');
+  };
+
+  const updateCompany = (id: string, updatedCompany: CompanyProfile) => {
+    const companyIndex = companies.findIndex(company => company.id === id);
+    
+    if (companyIndex === -1) {
+      toast.error('Company not found');
+      return;
+    }
+
+    const newCompany = {
+      ...updatedCompany,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updatedCompanies = [...companies];
+    updatedCompanies[companyIndex] = newCompany;
+    
+    setCompanies(updatedCompanies);
+    localStorage.setItem('cpms_companies', JSON.stringify(updatedCompanies));
+    toast.success('Company updated successfully!');
+  };
+
+  const deleteCompany = (id: string) => {
+    const updatedCompanies = companies.filter(company => company.id !== id);
+    setCompanies(updatedCompanies);
+    localStorage.setItem('cpms_companies', JSON.stringify(updatedCompanies));
+    toast.success('Company deleted successfully!');
+  };
+
+  const value = {
     companies,
     loading,
+    error,
+    getCompanyById,
     addCompany,
     updateCompany,
     deleteCompany,
-    getCompany
   };
 
-  return (
-    <CompanyContext.Provider value={value}>
-      {children}
-    </CompanyContext.Provider>
-  );
+  return <CompanyContext.Provider value={value}>{children}</CompanyContext.Provider>;
 };
 
 export const useCompanies = () => {
