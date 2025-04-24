@@ -15,18 +15,18 @@ import { formatDate } from "@/lib/utils";
 
 const ViewCompany = () => {
   const { id } = useParams<{ id: string }>();
-  const { getCompany, deleteCompany } = useCompanies();
+  const { getCompanyById, deleteCompany } = useCompanies();
   const navigate = useNavigate();
-  const [company, setCompany] = useState(getCompany(id || ""));
+  const [company, setCompany] = useState(getCompanyById(id || ""));
 
   useEffect(() => {
-    const companyData = getCompany(id || "");
+    const companyData = getCompanyById(id || "");
     if (!companyData) {
       navigate("/companies");
     } else {
       setCompany(companyData);
     }
-  }, [id, getCompany, navigate]);
+  }, [id, getCompanyById, navigate]);
 
   if (!company) {
     return (
