@@ -65,10 +65,10 @@ export function DynamicSectionForm({ sections = [], onChange }: DynamicSectionFo
 
       {sections.map((section, index) => (
         <SectionEditor
-          key={section.id}
           section={section}
           onUpdate={(updatedSection) => handleUpdateSection(index, updatedSection)}
           onRemove={() => handleRemoveSection(index)}
+          key={section.id}
         />
       ))}
     </div>
