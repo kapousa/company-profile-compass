@@ -13,16 +13,16 @@ import { COMPANY_CATEGORIES, LOCATIONS } from "@/data/mockData";
 export function CompanyList() {
   const { companies, loading, deleteCompany } = useCompanies();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
 
   // Filter companies based on search term and filters
   const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCategory = categoryFilter === "" || company.category === categoryFilter;
-    const matchesLocation = locationFilter === "" || company.location === locationFilter;
+    const matchesCategory = categoryFilter === "all" || company.category === categoryFilter;
+    const matchesLocation = locationFilter === "all" || company.location === locationFilter;
     
     return matchesSearch && matchesCategory && matchesLocation;
   });
@@ -62,7 +62,7 @@ export function CompanyList() {
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {COMPANY_CATEGORIES.map(category => (
                   <SelectItem key={category} value={category}>{category}</SelectItem>
                 ))}
@@ -76,7 +76,7 @@ export function CompanyList() {
                 <SelectValue placeholder="Filter by location" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Locations</SelectItem>
+                <SelectItem value="all">All Locations</SelectItem>
                 {LOCATIONS.map(location => (
                   <SelectItem key={location} value={location}>{location}</SelectItem>
                 ))}
